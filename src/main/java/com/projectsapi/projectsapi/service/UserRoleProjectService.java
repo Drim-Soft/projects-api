@@ -25,12 +25,12 @@ public class UserRoleProjectService {
     @Autowired
     private ProjectRepository projectRepository;
 
-    // 🔹 Listar relaciones completas por ID de proyecto
+    // Listar relaciones completas por ID de proyecto
     public List<UserRoleProject> getUsersByProject(Integer projectId) {
         return userRoleProjectRepository.findByIDProject(projectId);
     }
 
-    // 🔹 Solo IDs de usuarios (si lo necesitas)
+    // Solo IDs de usuarios (si lo necesitas)
     public List<Integer> getUserIdsByProject(Integer projectId) {
         return userRoleProjectRepository.findByIDProject(projectId)
                 .stream()
@@ -38,7 +38,7 @@ public class UserRoleProjectService {
                 .collect(Collectors.toList());
     }
 
-    // 🔹 Asignar usuario a proyecto con rol
+    // Asignar usuario a proyecto con rol
     public UserRoleProject assignUserToProject(Integer projectId, Integer userId, Integer roleId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));

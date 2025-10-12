@@ -45,7 +45,6 @@ public class Project {
     @JsonProperty("IDProjectStatusRef")
     private Integer IDProjectStatusRef;
 
-    // ====== Getters y Setters ======
     public Integer getIDProject() { return IDProject; }
     public void setIDProject(Integer IDProject) { this.IDProject = IDProject; }
 

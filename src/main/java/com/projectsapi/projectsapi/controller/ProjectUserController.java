@@ -21,7 +21,6 @@ public class ProjectUserController {
         this.projectUserService = projectUserService;
     }
 
-    // ✅ PATCH -> inserta directo en la tabla
     @PatchMapping("/{id}/users")
     public ResponseEntity<String> assignUserToProject(
             @PathVariable Integer id,
@@ -34,7 +33,7 @@ public class ProjectUserController {
 
         return ResponseEntity.ok(" Usuario " + idUser + " asignado al proyecto " + id + " con rol " + idRole);
     }
-     // ✅ GET -> listar usuarios por proyecto
+
     @GetMapping("/{id}/users")
     public ResponseEntity<List<Map<String, Object>>> getUsersByProject(@PathVariable Integer id) {
         String sql = "SELECT * FROM UserRoleProject WHERE IDProject = ?";
