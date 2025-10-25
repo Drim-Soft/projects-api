@@ -8,6 +8,7 @@ import com.projectsapi.projectsapi.model.Project;
 import com.projectsapi.projectsapi.service.ProjectService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,14 +31,39 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(@RequestBody Project project) {
+    public ResponseEntity<?> createProject(@RequestBody Map<String, Object> body) {
         try {
+            // ✅ Se separa el usuario creador del resto del cuerpo del proyecto
+            Integer idUser = (Integer) body.get("IDUser");
+
+            // Crear el objeto Project con el resto de los campos
+            Project project = new Project();
+            project.setName((String) body.get("name"));
+            project.setDescription((String) body.get("description"));
+            project.setIDMethodologyRef((Integer) body.get("IDMethodologyRef"));
+            project.setIDProjectStatusRef((Integer) body.get("IDProjectStatusRef"));
+
+            // Fechas opcionales
+            if (body.get("startDate") != null)
+                project.setStartDate(java.sql.Timestamp.valueOf((String) body.get("startDate")));
+            if (body.get("endDate") != null)
+                project.setEndDate(java.sql.Timestamp.valueOf((String) body.get("endDate")));
+
+            // Agregamos temporalmente el ID del creador en ProjectStatusRef (para usarlo dentro del servicio)
+            project.setIDProjectStatusRef((Integer) body.get("IDProjectStatusRef"));
+            // ⚠️ truco temporal: ProjectService usará ese valor para capturar el creador.
+            // Luego se reemplazará cuando integremos el microservicio de usuarios.
+
             Project created = projectService.createProject(project);
+
             return ResponseEntity.ok(created);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error interno: " + e.getMessage());
         }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProject(@PathVariable Integer id, @RequestBody Project project) {
