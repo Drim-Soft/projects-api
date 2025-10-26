@@ -3,9 +3,11 @@ package com.projectsapi.projectsapi.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.projectsapi.projectsapi.model.Task;
 import com.projectsapi.projectsapi.service.TaskService;
+import com.projectsapi.projectsapi.service.StorageService;
 import com.projectsapi.projectsapi.repository.TaskStatusRepository;
 import com.projectsapi.projectsapi.repository.TaskPriorityRepository;
 
@@ -27,6 +29,9 @@ public class TaskController {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping
     public List<Task> getAllTasks() {
@@ -147,5 +152,13 @@ public class TaskController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/{taskId}/upload-file")
+    public ResponseEntity<?> uploadTaskFile(
+            @PathVariable Integer taskId,
+            @RequestParam("file") MultipartFile file) {
+
+        return storageService.uploadAndLinkFileToTask(taskId, file);
     }
 }
