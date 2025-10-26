@@ -12,12 +12,8 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/task-priority")
-@CrossOrigin(origins = {
-        "http://localhost:3000",
-        "https://traducianistic-immorally-harmony.ngrok-free.dev",
-        "https://nonblunderingly-micropaleontological-mabelle.ngrok-free.dev",
-        "https://preceremonial-forgivingly-natisha.ngrok-free.dev"
-})
+@CrossOrigin(originPatterns = "*")
+
 public class TaskPriorityController {
 
     @Autowired

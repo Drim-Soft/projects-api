@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/task-status")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class TaskStatusController {
 
     // =====================================================
