@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDate;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/projects")
@@ -44,31 +45,26 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<?> createProject(@RequestBody Map<String, Object> body) {
         try {
-
             Project project = new Project();
             project.setName((String) body.get("name"));
             project.setDescription((String) body.get("description"));
 
-            //  Buscar metodología por nombre
+            // Metodología
             if (body.get("methodologyName") != null) {
                 String methodologyName = (String) body.get("methodologyName");
                 Integer idMethodology = methodologyRepository.findByNameIgnoreCase(methodologyName)
                     .map(m -> m.getIDMethodology())
                     .orElseThrow(() -> new IllegalArgumentException("No se encontró la metodología: " + methodologyName));
                 project.setIDMethodologyRef(idMethodology);
-            } else {
-                throw new IllegalArgumentException("Methodology name is required");
             }
 
-            //  Buscar estado por nombre
+            // Estado
             if (body.get("statusName") != null) {
                 String statusName = (String) body.get("statusName");
                 Integer idStatus = projectStatusRepository.findByNameIgnoreCase(statusName)
                     .map(s -> s.getIDProjectStatus())
                     .orElseThrow(() -> new IllegalArgumentException("No se encontró el estado: " + statusName));
                 project.setIDProjectStatusRef(idStatus);
-            } else {
-                throw new IllegalArgumentException("Status name is required");
             }
 
             // Fechas opcionales
@@ -77,7 +73,15 @@ public class ProjectController {
             if (body.get("endDate") != null)
                 project.setEndDate(LocalDate.parse((String) body.get("endDate")));
 
+            // Guardar proyecto
             Project created = projectService.createProject(project);
+
+            // Asociar usuario creador en UserRoleProject
+            if (body.get("userId") != null) {
+                Integer userId = (Integer) body.get("userId");
+                projectService.assignUserToProject(userId, created.getIDProject(), "Administrador Proyecto");
+            }
+
             return ResponseEntity.ok(created);
 
         } catch (IllegalArgumentException e) {
@@ -86,6 +90,7 @@ public class ProjectController {
             return ResponseEntity.internalServerError().body("Error interno: " + e.getMessage());
         }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProject(@PathVariable Integer id, @RequestBody Project project) {

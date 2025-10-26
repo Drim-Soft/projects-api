@@ -2,36 +2,20 @@ package com.projectsapi.projectsapi.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.projectsapi.projectsapi.model.Methodology;
-import com.projectsapi.projectsapi.model.Project;
-import com.projectsapi.projectsapi.model.ProjectStatus;
-import com.projectsapi.projectsapi.model.Role;
-import com.projectsapi.projectsapi.repository.MethodologyRepository;
-import com.projectsapi.projectsapi.repository.ProjectRepository;
-import com.projectsapi.projectsapi.repository.ProjectStatusRepository;
-import com.projectsapi.projectsapi.repository.RoleRepository;
-
+import org.springframework.transaction.annotation.Transactional;
+import com.projectsapi.projectsapi.model.*;
+import com.projectsapi.projectsapi.repository.*;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ProjectService {
 
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private MethodologyRepository methodologyRepository;
-
-    @Autowired
-    private ProjectStatusRepository projectStatusRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private ProjectUserService projectUserService;
+    @Autowired private ProjectRepository projectRepository;
+    @Autowired private MethodologyRepository methodologyRepository;
+    @Autowired private ProjectStatusRepository projectStatusRepository;
+    @Autowired private RoleRepository roleRepository;
+    @Autowired private UserRoleProjectRepository userRoleProjectRepository;
 
     // =====================================================
     // GET ALL PROJECTS
@@ -51,15 +35,10 @@ public class ProjectService {
     // CREATE PROJECT
     // =====================================================
     public Project createProject(Project project) {
-        System.out.println("📩 Recibido: MethodologyRef=" + project.getIDMethodologyRef() +
-                        " | ProjectStatusRef=" + project.getIDProjectStatusRef());
-
-        if (project.getIDMethodologyRef() == null) {
+        if (project.getIDMethodologyRef() == null)
             throw new IllegalArgumentException("Methodology ID is required");
-        }
-        if (project.getIDProjectStatusRef() == null) {
+        if (project.getIDProjectStatusRef() == null)
             throw new IllegalArgumentException("ProjectStatus ID is required");
-        }
 
         Methodology methodology = methodologyRepository.findById(project.getIDMethodologyRef())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Methodology ID"));
@@ -69,31 +48,29 @@ public class ProjectService {
         project.setMethodology(methodology);
         project.setProjectStatus(status);
 
-        // Guardar el proyecto
         Project savedProject = projectRepository.save(project);
 
         // =====================================================
         // Asignar automáticamente el rol “Administrador Proyecto” al creador
         // =====================================================
         try {
-            Integer creatorId = project.getIDProjectStatusRef(); 
-            // ⚠️ Este valor NO viene de BD. Debes enviarlo en el body del POST, 
-            // por ejemplo: { "IDUser": 5, "IDMethodologyRef": 1, "IDProjectStatusRef": 1, ... }
-            // Es responsabilidad del front incluir el IDUser creador.
-
-            if (creatorId == null) {
-                System.out.println("⚠️ No se recibió IDUser en el request, no se puede asignar rol automáticamente.");
-                return savedProject;
-            }
+            Integer creatorId = 1; // temporal mientras el front no envía usuario real
 
             Role adminRole = roleRepository.findByMethodology_IDMethodology(methodology.getIDMethodology())
                     .stream()
                     .filter(r -> r.getName().equalsIgnoreCase("Administrador Proyecto"))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Role 'Administrador Proyecto' not found for this methodology"));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "No se encontró el rol 'Administrador Proyecto' para la metodología con ID "
+                        + methodology.getIDMethodology()
+                    ));
 
-            projectUserService.insertRelation(creatorId, adminRole.getIDRole(), savedProject.getIDProject());
-            System.out.println("✅ Asignado automáticamente rol 'Administrador Proyecto' al usuario " + creatorId);
+            userRoleProjectRepository.assignUserToProject(
+                    creatorId, adminRole.getIDRole(), savedProject.getIDProject()
+            );
+
+            System.out.println("✅ Rol 'Administrador Proyecto' asignado correctamente (metodología "
+                    + methodology.getIDMethodology() + ")");
 
         } catch (Exception e) {
             System.out.println("⚠️ Error al asignar rol automáticamente: " + e.getMessage());
@@ -139,24 +116,50 @@ public class ProjectService {
     public void deleteProject(Integer id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
-
         ProjectStatus deletedStatus = projectStatusRepository.findAll().stream()
-                .filter(ps -> ps.getName().equalsIgnoreCase("Deleted") ||
-                              ps.getName().equalsIgnoreCase("Eliminado"))
+                .filter(ps -> ps.getName().equalsIgnoreCase("Deleted") || ps.getName().equalsIgnoreCase("Eliminado"))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Deleted status not found"));
-
         project.setProjectStatus(deletedStatus);
         projectRepository.save(project);
     }
+
     // =====================================================
     // GET PROJECTS BY USER ID
     // =====================================================
     public List<Project> getProjectsByUserId(Integer userId) {
-        if (userId == null) {
+        if (userId == null)
             throw new IllegalArgumentException("User ID cannot be null");
-        }
         return projectRepository.findProjectsByUserId(userId);
+    }
+
+    // =====================================================
+    // ASSIGN USER TO PROJECT
+    // =====================================================
+    @Transactional
+    public void assignUserToProject(Integer userId, Integer projectId, String roleName) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        Integer methodologyId = project.getMethodology().getIDMethodology();
+
+        Role role = roleRepository.findByMethodology_IDMethodology(methodologyId)
+                .stream()
+                .filter(r -> r.getName().equalsIgnoreCase(roleName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Role not found: " + roleName + " para la metodología ID " + methodologyId
+                ));
+
+        // ✅ Verificar si ya existe antes de insertar
+        boolean alreadyExists = userRoleProjectRepository.findByIDProject(projectId).stream()
+                .anyMatch(urp -> urp.getIDUser().equals(userId) && urp.getIDRole().equals(role.getIDRole()));
+
+        if (!alreadyExists) {
+            userRoleProjectRepository.assignUserToProject(userId, role.getIDRole(), projectId);
+            System.out.println("✅ Asignación registrada: user=" + userId + ", role=" + role.getIDRole() + ", project=" + projectId);
+        } else {
+            System.out.println("⚠️ Ya existía esa asignación, no se volvió a insertar.");
+        }
     }
 
 }
