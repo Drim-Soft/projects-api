@@ -1,10 +1,8 @@
 package com.projectsapi.projectsapi.model;
 
 import jakarta.persistence.*;
-import java.sql.Timestamp;
+import java.time.LocalDate; 
 import com.fasterxml.jackson.annotation.JsonFormat;
-
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -26,11 +24,11 @@ public class Project {
     private String name;
     private String description;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Timestamp startDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate startDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Timestamp endDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
 
     private Integer percentageProgress;
     private Integer budget;
@@ -45,6 +43,7 @@ public class Project {
     @JsonProperty("IDProjectStatusRef")
     private Integer IDProjectStatusRef;
 
+    // Getters y setters
     public Integer getIDProject() { return IDProject; }
     public void setIDProject(Integer IDProject) { this.IDProject = IDProject; }
 
@@ -60,11 +59,11 @@ public class Project {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Timestamp getStartDate() { return startDate; }
-    public void setStartDate(Timestamp startDate) { this.startDate = startDate; }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public Timestamp getEndDate() { return endDate; }
-    public void setEndDate(Timestamp endDate) { this.endDate = endDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
     public Integer getPercentageProgress() { return percentageProgress; }
     public void setPercentageProgress(Integer percentageProgress) { this.percentageProgress = percentageProgress; }
