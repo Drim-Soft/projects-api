@@ -161,4 +161,72 @@ public class TaskController {
 
         return storageService.uploadAndLinkFileToTask(taskId, file);
     }
+
+    @PostMapping(value = "/create-with-file", consumes = "multipart/form-data")
+    public ResponseEntity<?> createTaskWithFile(
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("phaseId") Integer phaseId,
+            @RequestParam("statusName") String statusName,
+            @RequestParam("priorityName") String priorityName,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            @RequestParam(value = "timeInvested", required = false) Integer timeInvested,
+            @RequestParam(value = "percentageProgress", required = false) Integer percentageProgress,
+            @RequestParam(value = "budget", required = false) Integer budget,
+            @RequestParam(value = "cost", required = false) Integer cost,
+            @RequestParam(value = "score", required = false) Integer score,
+            @RequestParam(value = "feedback", required = false) String feedback) {
+
+        try {
+            // Crear la tarea primero
+            Task task = new Task();
+            task.setName(name);
+            task.setDescription(description);
+            task.setIDPhaseRef(phaseId);
+
+            // Buscar estado por nombre
+            Integer idStatus = taskStatusRepository.findByNameIgnoreCase(statusName)
+                .map(s -> s.getIDTaskStatus())
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el estado: " + statusName));
+            task.setIDTaskStatusRef(idStatus);
+
+            // Buscar prioridad por nombre
+            Integer idPriority = taskPriorityRepository.findByNameIgnoreCase(priorityName)
+                .map(p -> p.getIDTaskPriority())
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la prioridad: " + priorityName));
+            task.setIDTaskPriorityRef(idPriority);
+
+            // Campos opcionales
+            if (userId != null) task.setIDUser(userId);
+            if (startDate != null) task.setStartDate(LocalDate.parse(startDate));
+            if (endDate != null) task.setEndDate(LocalDate.parse(endDate));
+            if (timeInvested != null) task.setTimeInvested(timeInvested);
+            if (percentageProgress != null) task.setPercentageProgress(percentageProgress);
+            if (budget != null) task.setBudget(budget);
+            if (cost != null) task.setCost(cost);
+            if (score != null) task.setScore(score);
+            if (feedback != null) task.setFeedback(feedback);
+
+            // Crear la tarea
+            Task createdTask = taskService.createTask(task);
+
+            // Si hay archivo, subirlo y actualizar la tarea
+            if (file != null && !file.isEmpty()) {
+                ResponseEntity<?> uploadResponse = storageService.uploadAndLinkFileToTask(createdTask.getIDTask(), file);
+                if (!uploadResponse.getStatusCode().is2xxSuccessful()) {
+                    return uploadResponse; // Retornar error de subida
+                }
+            }
+
+            return ResponseEntity.ok(createdTask);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error interno: " + e.getMessage());
+        }
+    }
 }
