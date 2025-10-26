@@ -106,4 +106,20 @@ public class ProjectController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getProjectsByUserId(@PathVariable Integer userId) {
+        try {
+            List<Project> projects = projectService.getProjectsByUserId(userId);
+            if (projects.isEmpty()) {
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            return ResponseEntity.ok(projects);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error interno: " + e.getMessage());
+        }
+    }
+
 }

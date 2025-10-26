@@ -149,4 +149,14 @@ public class ProjectService {
         project.setProjectStatus(deletedStatus);
         projectRepository.save(project);
     }
+    // =====================================================
+    // GET PROJECTS BY USER ID
+    // =====================================================
+    public List<Project> getProjectsByUserId(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        return projectRepository.findProjectsByUserId(userId);
+    }
+
 }
