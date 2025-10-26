@@ -14,12 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                            "http://localhost:3000", // Frontend local
-                            "https://traducianistic-immorally-harmony.ngrok-free.dev",
-                            "https://nonblunderingly-micropaleontological-mabelle.ngrok-free.dev",
-                            "https://preceremonial-forgivingly-natisha.ngrok-free.dev"
-                        )
+                        .allowedOriginPatterns("*")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
