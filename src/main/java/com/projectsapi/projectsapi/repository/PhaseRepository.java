@@ -16,4 +16,9 @@ public interface PhaseRepository extends JpaRepository<Phase, Integer> {
     Phase findPhaseWithProject(@Param("id") Integer id);
 
     List<Phase> findByProject_IDProject(Integer IDProject);
+
+    @Query("SELECT p FROM Phase p WHERE p.phaseStatus.id <> 3")
+    List<Phase> findAllActive();
+
+
 }
