@@ -1,25 +1,25 @@
 package com.projectsapi.projectsapi.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate; 
+import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "Project")
-public class Project {
+@Table(name = "Phase")
+public class Phase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer IDProject;
+    private Integer IDPhase;
 
     @ManyToOne
-    @JoinColumn(name = "IDMethodology", referencedColumnName = "IDMethodology")
-    private Methodology methodology;
+    @JoinColumn(name = "IDProject", referencedColumnName = "IDProject")
+    private Project project;
 
     @ManyToOne
-    @JoinColumn(name = "IDProjectStatus", referencedColumnName = "IDProjectStatus")
-    private ProjectStatus projectStatus;
+    @JoinColumn(name = "IDPhaseStatus", referencedColumnName = "IDPhaseStatus")
+    private PhaseStatus phaseStatus;
 
     private String name;
     private String description;
@@ -33,25 +33,24 @@ public class Project {
     private Integer percentageProgress;
     private Integer budget;
     private Integer cost;
-    private Integer percentageBudgetExecution;
 
     @Transient
-    @JsonProperty("IDMethodologyRef")
-    private Integer IDMethodologyRef;
+    @JsonProperty("IDProjectRef")
+    private Integer IDProjectRef;
 
     @Transient
-    @JsonProperty("IDProjectStatusRef")
-    private Integer IDProjectStatusRef;
+    @JsonProperty("IDPhaseStatusRef")
+    private Integer IDPhaseStatusRef;
 
     // Getters y setters
-    public Integer getIDProject() { return IDProject; }
-    public void setIDProject(Integer IDProject) { this.IDProject = IDProject; }
+    public Integer getIDPhase() { return IDPhase; }
+    public void setIDPhase(Integer IDPhase) { this.IDPhase = IDPhase; }
 
-    public Methodology getMethodology() { return methodology; }
-    public void setMethodology(Methodology methodology) { this.methodology = methodology; }
+    public Project getProject() { return project; }
+    public void setProject(Project project) { this.project = project; }
 
-    public ProjectStatus getProjectStatus() { return projectStatus; }
-    public void setProjectStatus(ProjectStatus projectStatus) { this.projectStatus = projectStatus; }
+    public PhaseStatus getPhaseStatus() { return phaseStatus; }
+    public void setPhaseStatus(PhaseStatus phaseStatus) { this.phaseStatus = phaseStatus; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -74,12 +73,9 @@ public class Project {
     public Integer getCost() { return cost; }
     public void setCost(Integer cost) { this.cost = cost; }
 
-    public Integer getPercentageBudgetExecution() { return percentageBudgetExecution; }
-    public void setPercentageBudgetExecution(Integer percentageBudgetExecution) { this.percentageBudgetExecution = percentageBudgetExecution; }
+    public Integer getIDProjectRef() { return IDProjectRef; }
+    public void setIDProjectRef(Integer IDProjectRef) { this.IDProjectRef = IDProjectRef; }
 
-    public Integer getIDMethodologyRef() { return IDMethodologyRef; }
-    public void setIDMethodologyRef(Integer IDMethodologyRef) { this.IDMethodologyRef = IDMethodologyRef; }
-
-    public Integer getIDProjectStatusRef() { return IDProjectStatusRef; }
-    public void setIDProjectStatusRef(Integer IDProjectStatusRef) { this.IDProjectStatusRef = IDProjectStatusRef; }
+    public Integer getIDPhaseStatusRef() { return IDPhaseStatusRef; }
+    public void setIDPhaseStatusRef(Integer IDPhaseStatusRef) { this.IDPhaseStatusRef = IDPhaseStatusRef; }
 }
