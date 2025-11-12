@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Pruebas - Projects API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .timestamp {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.passed {
+            border-left: 5px solid #28a745;
+        }
+        
+        .stat-card.failed {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .stat-card.errors {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .stat-card.skipped {
+            border-left: 5px solid #6c757d;
+        }
+        
+        .stat-card.total {
+            border-left: 5px solid #007bff;
+        }
+        
+        .stat-card.time {
+            border-left: 5px solid #17a2b8;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-percentage {
+            font-size: 1.2em;
+            margin-top: 10px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            padding: 30px;
+            background: white;
+        }
+        
+        .chart-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background: #e9ecef;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.5s;
+        }
+        
+        .progress-fill.passed {
+            background: linear-gradient(90deg, #28a745, #20c997);
+        }
+        
+        .progress-fill.failed {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+        
+        .progress-fill.errors {
+            background: linear-gradient(90deg, #ffc107, #e0a800);
+        }
+        
+        .progress-fill.skipped {
+            background: linear-gradient(90deg, #6c757d, #5a6268);
+        }
+        
+        .suites-section {
+            padding: 30px;
+        }
+        
+        .suites-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .suite-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .suite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .suite-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .suite-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .suite-stat {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .suite-stat.passed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .suite-stat.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .suite-stat.errors {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .suite-stat.skipped {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .testcases-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .testcases-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .testcases-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .testcases-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .status-badge.passed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.failure {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.error {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.skipped {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .error-details {
+            margin-top: 10px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #856404;
+        }
+        
+        .error-details strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .summary h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+        
+        .summary-text {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .suite-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .testcases-table {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dashboard de Pruebas</h1>
+            <div class="timestamp">Generado el 11/11/2025 15:45:52</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-label">Total de Pruebas</div>
+                <div class="stat-value">99</div>
+            </div>
+            
+            <div class="stat-card passed">
+                <div class="stat-label">Exitosas</div>
+                <div class="stat-value">99</div>
+                <div class="stat-percentage">100.0%</div>
+            </div>
+            
+            <div class="stat-card failed">
+                <div class="stat-label">Fallidas</div>
+                <div class="stat-value">0</div>
+            </div>
+            
+            <div class="stat-card errors">
+                <div class="stat-label">Errores</div>
+                <div class="stat-value">0</div>
+            </div>
+            
+            <div class="stat-card skipped">
+                <div class="stat-label">Omitidas</div>
+                <div class="stat-value">0</div>
+            </div>
+            
+            <div class="stat-card time">
+                <div class="stat-label">Tiempo Total</div>
+                <div class="stat-value">17.71s</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Distribución de Resultados</div>
+            <div class="progress-bar">
+                <div class="progress-fill passed" style="width: 100.0%">
+                    99 Exitosas
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill failed" style="width: 0.0%">
+                    0 Fallidas
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill errors" style="width: 0.0%">
+                    0 Errores
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill skipped" style="width: 0.0%">
+                    0 Omitidas
+                </div>
+            </div>
+        </div>
+        
+        <div class="suites-section">
+            <div class="suites-title">Detalles por Suite de Pruebas</div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.ProjectsapiApplicationTests</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">1 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">15.12s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>contextLoads</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.ProjectsapiApplicationTests</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.725s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.MethodologyServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">8 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.53s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testGetMethodologyById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.483s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateMethodology_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllMethodologies</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteMethodology_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetMethodologyById_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.MethodologyServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.PhaseServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">5 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.32s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdatePhase</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PhaseServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.290s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreatePhaseThrowsErrorWhenProjectMissing</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PhaseServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdatePhaseNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PhaseServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllPhases</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PhaseServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetPhaseById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PhaseServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.ProjectServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">16 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.41s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_ProjectNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.291s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.010s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateProject_MissingMethodologyId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateProject_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.010s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_RoleNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.010s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetProjectById_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateProject_MissingProjectStatusId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateProject_InvalidMethodologyId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetProjectsByUserId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteProject_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateProject_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetProjectsByUserId_NullUserId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetProjectById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteProject_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllProjects</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateProject_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.009s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.ProjectUserServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">6 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.38s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_NullProjectId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.285s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.059s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_AllNull</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_ValidValues</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_NullRoleId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testInsertRelation_NullUserId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.ProjectUserServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.PublicMessageServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">9 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.30s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testCreatePublicMessage_TaskNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.241s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreatePublicMessage_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreatePublicMessage_EmptyContent</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetPublicMessageById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetPublicMessagesByTaskId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdatePublicMessage_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllPublicMessages</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCountMessagesByTaskId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeletePublicMessage_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.PublicMessageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.RoleServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">9 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.05s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteRole_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateRole_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllRoles</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetRolesByMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetRoleById_NotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateRole</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetRoleById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteRole_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateRole_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.RoleServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.StorageServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">3 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.11s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testUploadAndLinkFileToTask_NullFile</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.StorageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.089s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUploadAndLinkFileToTask_TaskNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.StorageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.009s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUploadAndLinkFileToTask_InvalidTaskId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.StorageServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">9 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.14s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testGetTaskPriorityById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.098s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTaskPriority_EmptyName</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTaskPriority_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateTaskPriority_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.009s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTaskPriority_DuplicateName</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testExistsByName</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteTaskPriority_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetTaskPriorityByName</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllTaskPriorities</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskPriorityServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.TaskServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">6 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.14s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllTasks</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.103s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTask_InvalidPhaseId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTask_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.007s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetTaskById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteTask_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateTask_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.TaskStatusServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">7 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.03s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTaskStatus_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testExistsById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testDeleteTaskStatus_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCreateTaskStatus_DuplicateName</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetTaskStatusById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUpdateTaskStatus_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllTaskStatuses</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.TaskStatusServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.001s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">8 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.04s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_ProjectNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_RoleNotValidForMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_RoleNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_ProjectHasNoMethodology</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetUserIdsByProject</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToProject_ValidAssignment</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetUsersByProject</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserRoleProjectServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="suite-card">
+                <div class="suite-header">
+                    <div class="suite-name">com.projectsapi.projectsapi.service.UserTaskServiceTest</div>
+                    <div class="suite-stats">
+                        <span class="suite-stat passed">12 Exitosas</span>
+                        <span class="suite-stat failed">0 Fallidas</span>
+                        <span class="suite-stat errors">0 Errores</span>
+                        <span class="suite-stat skipped">0 Omitidas</span>
+                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">0.15s</span>
+                    </div>
+                </div>
+                
+                <table class="testcases-table">
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>testUnassignUserFromTask_NotAssigned</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.103s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetAllUserTasks</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCountUsersByTaskId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.006s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testCountTasksByUserId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.001s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testExistsUserTaskRelation</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.003s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testUnassignUserFromTask_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetUserTaskById</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.000s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToTask_Success</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.008s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToTask_TaskNotFound</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.005s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetUserTasksByTaskId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testGetUserTasksByUserId</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.004s</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>testAssignUserToTask_AlreadyAssigned</strong><br>
+                                <small style="color: #6c757d;">com.projectsapi.projectsapi.service.UserTaskServiceTest</small>
+
+                            </td>
+                            <td><span class="status-badge passed">Exitoso</span></td>
+                            <td>0.002s</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+        
+        <div class="summary">
+            <h2>Todas las pruebas pasaron</h2>
+            <div class="summary-text">
+                99 de 99 pruebas exitosas (100.0%)
+            </div>
+        </div>
+    </div>
+</body>
+</html>
