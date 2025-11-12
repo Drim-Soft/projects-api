@@ -3,6 +3,7 @@ package com.projectsapi.projectsapi.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectUserService {
@@ -10,6 +11,7 @@ public class ProjectUserService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Transactional
     public void insertRelation(Integer idUser, Integer idRole, Integer idProject) {
         if (idUser == null || idRole == null || idProject == null) {
             throw new IllegalArgumentException(" Los campos IDUser, IDRole e IDProject son obligatorios.");
