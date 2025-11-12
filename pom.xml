@@ -94,14 +94,21 @@
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-                    <!-- Generar reporte al finalizar las pruebas -->
-                    <execution>
-                        <id>report</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
+                     <!-- Genera el reporte XML después de las pruebas -->
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<reports>
+								<xml enabled="true" />
+								<html enabled="false" />
+								<csv enabled="false" />
+							</reports>
+						</configuration>
+					</execution>
                 </executions>
             </plugin>
 
