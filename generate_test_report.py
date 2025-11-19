@@ -261,12 +261,32 @@ def generate_html_dashboard(reports, output_file='test-report.html'):
             color: #2c3e50;
         }}
         
-        .suite-card {{
+        details.suite-card {{
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 25px;
+            padding: 0 25px 25px 25px;
             margin-bottom: 20px;
             border-left: 5px solid #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }}
+        
+        details.suite-card[open] {{
+            animation: expand 0.3s ease-in-out;
+        }}
+        
+        @keyframes expand {{
+            from {{ opacity: 0; transform: translateY(-5px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        
+        details.suite-card summary {{
+            list-style: none;
+            cursor: pointer;
+            outline: none;
+        }}
+        
+        details.suite-card summary::-webkit-details-marker {{
+            display: none;
         }}
         
         .suite-header {{
@@ -314,6 +334,10 @@ def generate_html_dashboard(reports, output_file='test-report.html'):
         .suite-stat.skipped {{
             background: #e2e3e5;
             color: #383d41;
+        }}
+        
+        .suite-content {{
+            margin-top: 10px;
         }}
         
         .testcases-table {{
@@ -488,27 +512,29 @@ def generate_html_dashboard(reports, output_file='test-report.html'):
     for report in reports:
         suite = report['suite_name']
         suite_html = f"""
-            <div class="suite-card">
-                <div class="suite-header">
-                    <div class="suite-name">{suite}</div>
-                    <div class="suite-stats">
-                        <span class="suite-stat passed">{report['passed']} Exitosas</span>
-                        <span class="suite-stat failed">{report['failures']} Fallidas</span>
-                        <span class="suite-stat errors">{report['errors']} Errores</span>
-                        <span class="suite-stat skipped">{report['skipped']} Omitidas</span>
-                        <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">{report['time']:.2f}s</span>
+            <details class="suite-card">
+                <summary>
+                    <div class="suite-header">
+                        <div class="suite-name">{suite}</div>
+                        <div class="suite-stats">
+                            <span class="suite-stat passed">{report['passed']} Exitosas</span>
+                            <span class="suite-stat failed">{report['failures']} Fallidas</span>
+                            <span class="suite-stat errors">{report['errors']} Errores</span>
+                            <span class="suite-stat skipped">{report['skipped']} Omitidas</span>
+                            <span class="suite-stat" style="background: #d1ecf1; color: #0c5460;">{report['time']:.2f}s</span>
+                        </div>
                     </div>
-                </div>
-                
-                <table class="testcases-table">
-                    <thead>
-                        <tr>
-                            <th>Prueba</th>
-                            <th>Estado</th>
-                            <th>Tiempo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                </summary>
+                <div class="suite-content">
+                    <table class="testcases-table">
+                        <thead>
+                            <tr>
+                                <th>Prueba</th>
+                                <th>Estado</th>
+                                <th>Tiempo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 """
         
         for testcase in report['testcases']:
@@ -543,9 +569,10 @@ def generate_html_dashboard(reports, output_file='test-report.html'):
 """
         
         suite_html += """
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
 """
         html += suite_html
     
