@@ -158,6 +158,8 @@ public class PhaseServiceTest {
 
     @Test
     void testGetPhasesByProject() {
+        phase.setPhaseStatus(status);
+        
         Phase phase2 = new Phase();
         phase2.setIDPhase(2);
         phase2.setPhaseStatus(status);

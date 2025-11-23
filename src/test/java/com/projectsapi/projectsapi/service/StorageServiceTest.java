@@ -11,17 +11,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
 
-import java.io.InputStream;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class StorageServiceTest {
@@ -54,9 +50,12 @@ class StorageServiceTest {
     }
 
     @Test
-    void testUploadAndLinkFileToTask_TaskNotFound() {
+    void testUploadAndLinkFileToTask_TaskNotFound() throws Exception {
         // Given
-        when(taskRepository.findById(1)).thenReturn(Optional.empty());
+        when(multipartFile.getOriginalFilename()).thenReturn("test.txt");
+        when(multipartFile.getContentType()).thenReturn("text/plain");
+        when(multipartFile.getSize()).thenReturn(100L);
+        lenient().when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         // When
         ResponseEntity<?> response = storageService.uploadAndLinkFileToTask(1, multipartFile);
@@ -94,8 +93,9 @@ class StorageServiceTest {
         // Given
         when(multipartFile.getOriginalFilename()).thenReturn("test.txt");
         when(multipartFile.getContentType()).thenReturn("text/plain");
-        when(multipartFile.getSize()).thenReturn(100L);
         when(multipartFile.getInputStream()).thenThrow(new RuntimeException("IO Error"));
+        lenient().when(taskRepository.findById(1)).thenReturn(Optional.of(testTask));
+        lenient().when(multipartFile.getSize()).thenReturn(100L);
 
         // When
         ResponseEntity<?> response = storageService.uploadAndLinkFileToTask(1, multipartFile);
@@ -110,7 +110,6 @@ class StorageServiceTest {
     void testUploadAndLinkFileToTask_FileWithEmptyName() throws Exception {
         // Given
         when(multipartFile.getOriginalFilename()).thenReturn(null);
-        when(taskRepository.findById(1)).thenReturn(Optional.of(testTask));
 
         // When
         ResponseEntity<?> response = storageService.uploadAndLinkFileToTask(1, multipartFile);

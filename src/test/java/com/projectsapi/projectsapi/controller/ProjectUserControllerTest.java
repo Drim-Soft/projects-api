@@ -147,6 +147,7 @@ class ProjectUserControllerTest {
         Map<String, Object> body = new HashMap<>();
         body.put("IDUser", 1);
 
+        testProject.setMethodology(null);
         testProject.setIDMethodologyRef(2);
         when(projectService.getProjectById(1)).thenReturn(Optional.of(testProject));
         doNothing().when(projectUserService).insertRelation(anyInt(), anyInt(), anyInt());

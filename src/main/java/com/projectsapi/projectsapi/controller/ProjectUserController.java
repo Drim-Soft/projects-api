@@ -59,7 +59,12 @@ public class ProjectUserController {
         }
 
         Project project = projectService.getProjectById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElse(null);
+        
+        if (project == null) {
+            logger.error("❌ Error: Proyecto no encontrado: projectId={}", id);
+            return ResponseEntity.badRequest().body("Project not found");
+        }
 
         Integer methodologyId = null;
         if (project.getMethodology() != null) {

@@ -1,5 +1,6 @@
 package com.projectsapi.projectsapi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,10 +10,12 @@ public class UserTask {
 
     @Id
     @Column(name = "IDUser")
+    @JsonProperty("IDUser")
     private Integer IDUser;
 
     @Id
     @Column(name = "IDTask")
+    @JsonProperty("IDTask")
     private Integer IDTask;
 
     @ManyToOne

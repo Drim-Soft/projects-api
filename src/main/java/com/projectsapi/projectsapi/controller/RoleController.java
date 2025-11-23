@@ -24,7 +24,11 @@ public class RoleController {
     @GetMapping
     public ResponseEntity<?> getRolesByProject(@PathVariable Integer projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElse(null);
+        
+        if (project == null) {
+            return ResponseEntity.badRequest().body("Project not found");
+        }
 
         if (project.getMethodology() == null) {
             return ResponseEntity.status(404).body("Project has no methodology assigned");
