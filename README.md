@@ -47,3 +47,13 @@ chmod +x run-tests-and-report.sh
 - El script automático ejecuta las pruebas primero y luego genera el reporte
 - Si solo quieres generar el reporte de pruebas ya ejecutadas, usa: `python generate_test_report.py`
 - Los reportes XML se generan en: `target/surefire-reports/`
+
+ejecutar sonar:
+curl http://localhost:9000/api/authentication/validate -u "sqp_7fc73d2c4aabda2bae74c0b9f73fd42e5ac24fac:"
+
+FUNCIONO ASÍ EN GIT BASH:
+$ mvn clean verify sonar:sonar \
+  -Dsonar.projectKey=projectsapi \
+  -Dsonar.projectName=projectsapi \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.token=sqp_7fc73d2c4aabda2bae74c0b9f73fd42e5ac24fac
